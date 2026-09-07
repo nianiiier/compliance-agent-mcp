@@ -23,6 +23,8 @@ var/
 .env
 *.env
 .venv/
+requirements.txt
+
 
 # 向量库、本地数据
 vector_db/

@@ -3,3 +3,35 @@ name = "compliance-agent-mcp"
 version = "0.1.0"
 description = "智能文档合规审查Agent｜LangGraph + MCP + RAGAS + HITL"
 requires-python = ">=3.11,<3.13"
+dependencies = [
+    "langgraph>=0.2",
+    "langchain>=0.3",
+    "langchain-openai>=0.2",
+    "langchain-chroma>=0.2",
+    "langchain-community>=0.3",
+    "langchain-huggingface>=0.1",
+    "langchain-text-splitters>=0.3",
+    "mcp>=1.0,<2",
+    "fastapi>=0.112",
+    "uvicorn>=0.24",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.0",
+    "chromadb>=0.5",
+    "sentence-transformers>=3.0",
+    "ragas>=0.2",
+    "python-dotenv>=1.0",
+    "python-multipart>=0.0.9",
+    "pyyaml>=6.0",
+    "docx2txt>=0.8",
+    "pypdf>=4.0",
+    "numpy>=1.26",
+    "langfuse>=3.0",
+    'pywin32>=311; sys_platform == "win32"',
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipython",
+    "jupyter",
+    "ruff"
+]
