@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 环境、密钥
+.env
+*.env
+.venv/
+
+# 向量库、本地数据
+vector_db/
+data/upload_docs/*
+!data/upload_docs/.gitkeep
+data/violation_case/*
+!data/violation_case/.gitkeep
+
+# 日志、trace
+traces/
+*.log
+
+# jupyter notebook
+.ipynb_checkpoints
+
+# node / frontend
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# ide
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# docker
+*.docker-compose.override.yml

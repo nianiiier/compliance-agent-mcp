@@ -1,0 +1,5 @@
+[project]
+name = "compliance-agent-mcp"
+version = "0.1.0"
+description = "智能文档合规审查Agent｜LangGraph + MCP + RAGAS + HITL"
+requires-python = ">=3.11,<3.13"
