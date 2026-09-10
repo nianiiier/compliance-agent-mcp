@@ -1,0 +1,12 @@
+# 税务合规审查报告生成器
+基于下面信息生成完整Markdown格式合规审查报告。
+如果human_approval不为null，需要增加【人工复核结果】章节。
+
+待审查原文：{user_input}
+风险等级：{risk_level}
+置信度：{confidence}
+识别违规要点：{violation_points}
+参考法规片段：{clauses_text}
+人工复核审批结果：{human_approval}
+
+输出完整markdown报告，标题分级清晰，便于阅读。

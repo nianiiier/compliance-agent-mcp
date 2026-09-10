@@ -58,16 +58,17 @@ def ingest_violation_case(file_path: str) -> dict:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="合规MCP服务")
-    # 恢复支持 stdio / sse 两种transport
-    parser.add_argument("--transport", choices=["stdio", "sse"], default="stdio")
-    parser.add_argument("--port", type=int, default=8005, help="SSE服务端口")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--transport", default="stdio", choices=["stdio","sse"])
+    # 旧SDK sse模式port参数不生效，仅做打印提示
+    parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
+    transport = args.transport
 
-    # ✅关键修复：日志输出到 stderr，不要污染stdout
-    print(f"[MCP‑Server] transport={args.transport}", file=sys.stderr)
-
-    if args.transport == "sse":
-        mcp.run(transport="sse", port=args.port)
+    if transport == "sse":
+        print(f"[MCP‑Server] transport={transport}，本SDK版本SSE固定监听端口 8000；传入的--port参数被忽略")
+        mcp.run(transport="sse")
     else:
+        print(f"[MCP‑Server] transport={transport}")
         mcp.run(transport="stdio")

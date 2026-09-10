@@ -12,6 +12,8 @@ import sys
 from typing import Dict, Any, Optional, List
 from dotenv import load_dotenv
 from mcp import ClientSession, Tool
+from contextlib import asynccontextmanager
+from mcp.client.sse import sse_client
 
 # Windows事件循环补丁
 if sys.platform == "win32":
@@ -95,6 +97,71 @@ class MCPToolClient:
         return {"ok": False, "msg": f"全部重试失败: {str(last_err)}", "data": None}
 
 
-# SSE占位接口，当前Fast‑MCP传统SSE存在502bug，暂不可用
+@asynccontextmanager
 async def create_mcp_sse_client(host: str, port: int):
-    raise NotImplementedError("SSE模式受Fast‑MCP SDK bug限制，暂未启用；后续迁移Streamable‑HTTP再实现")
+    """
+    SSE模式上下文管理器
+    注意：Fast‑MCP传统SSE存在偶发502异常风险，生产后续迁移Streamable‑HTTP
+    MCP服务需要预先独立启动：uv run python mcp_server/main.py --transport sse --port 8005
+    """
+    url = f"http://{host}:{port}/sse"
+    async with sse_client(url) as (read, write):
+        client = MCPToolClient(read_stream=read, write_stream=write)
+        await client.connect()
+        try:
+            yield client
+        finally:
+            await client.close()
+
+
+# ==================== Mock客户端：用于阶段3调试LangGraph，规避SSE 502 / stdio Windows bug ====================
+class MockMCPToolClient:
+    """模拟MCP客户端，返回固定样例数据，格式和真实MCP返回完全一致；业务节点不需要做任何修改"""
+    def __init__(self):
+        pass
+
+    async def connect(self):
+        pass
+
+    async def close(self):
+        pass
+
+    async def list_tools(self):
+        from mcp import Tool
+        return [Tool(name="retrieve_compliance", description="", inputSchema={})]
+
+    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if tool_name == "retrieve_compliance":
+            # 模拟法规检索返回，和真实MCP输出json结构完全对齐
+            return {
+                "ok": True,
+                "query": arguments.get("query",""),
+                "hit_count":3,
+                "clauses":[
+                    {
+                        "content":"虚开增值税发票属于违法行为，纳税人不得虚开发票用于进项税额抵扣。",
+                        "source":"data/upload_docs/增值税法实施条例.txt",
+                        "page":0
+                    },
+                    {
+                        "content":"进项税额抵扣应当取得合法有效的增值税扣税凭证。",
+                        "source":"data/upload_docs/增值税法实施条例.txt",
+                        "page":0
+                    }
+                ]
+            }
+        elif tool_name == "check_text_similarity":
+            return {"ok":True,"similar_result":[{"case_text":"虚开发票抵扣增值税","score":0.92}]}
+        else:
+            return {"ok":False,"msg":"mock未实现该工具","data":None}
+
+
+@asynccontextmanager
+async def create_mcp_mock_client():
+    """mock上下文管理器，替换create_mcp_sse_client使用"""
+    client = MockMCPToolClient()
+    await client.connect()
+    try:
+        yield client
+    finally:
+        await client.close()
