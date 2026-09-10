@@ -14,6 +14,8 @@ from dotenv import load_dotenv
 from mcp import ClientSession, Tool
 from contextlib import asynccontextmanager
 from mcp.client.sse import sse_client
+from mcp.client.stdio import stdio_client
+from mcp import StdioServerParameters
 
 # Windows事件循环补丁
 if sys.platform == "win32":
@@ -165,3 +167,23 @@ async def create_mcp_mock_client():
         yield client
     finally:
         await client.close()
+
+@asynccontextmanager
+async def create_mcp_stdio_client(server_script: str):
+    """
+    stdio传输，Windows：不要嵌套uv run，直接使用当前进程的python解释器
+    """
+    # ✅ 取当前虚拟环境python.exe路径，避免uv run双层子进程造成stdio流劫持
+    python_exe = sys.executable
+    params = StdioServerParameters(
+        command=python_exe,
+        args=[server_script, "--transport", "stdio"],
+        env=dict(os.environ)
+    )
+    async with stdio_client(params) as (read, write):
+        client = MCPToolClient(read_stream=read, write_stream=write)
+        await client.connect()
+        try:
+            yield client
+        finally:
+            await client.close()
