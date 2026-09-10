@@ -25,3 +25,12 @@ uv run python mcp_server/main.py --transport stdio
 uv run python mcp_server/main.py --transport sse --port 8005
 
 uv run python mcp_server/main.py --transport sse --port 8005
+
+阶段1：
+
+uv run python mcp_server/main.py --transport stdio
+
+uv run python scripts/test_mcp_stdio_client.py
+
+阶段2：
+uv run python scripts/test_agent_base_demo.py
