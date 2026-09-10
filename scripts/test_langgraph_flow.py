@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from agent_orchestrator.mcp_client.mcp_tool_client import create_mcp_mock_client
 from agent_orchestrator.graph.state import ComplianceAgentState
 from agent_orchestrator.graph.build_graph import build_agent_graph
+from langgraph.types import Command
 
 load_dotenv()
 
@@ -26,7 +27,7 @@ async def main():
         # 第一次执行，走到interrupt挂起
         await graph.ainvoke(init_state, config=config)
 
-        # ----- 拿到快照后 -----
+        # -----拿到快照之后-----
         snapshot = await graph.aget_state(config=config)
         print("\n✅线程挂起，快照信息：")
         print(f"中断原因: {snapshot.tasks[0].interrupts[0].value}")
@@ -34,10 +35,12 @@ async def main():
         print(snapshot.values)
 
         print("\n===== 模拟外部系统传入人工审批：human_approval=True，恢复执行 =====")
+        # ✅恢复必须传入 Command(resume=xxx)，不能普通dict！
         final_result = await graph.ainvoke(
-            input={"human_approval": True},
+            input=Command(resume=True),
             config=config
         )
+
 
 
         print("\n===== 执行完成最终state =====")

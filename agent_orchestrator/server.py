@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from agent_orchestrator.mcp_client.mcp_tool_client import create_mcp_sse_client, create_mcp_mock_client
 from agent_orchestrator.graph.build_graph import build_agent_graph
 from agent_orchestrator.graph.state import ComplianceAgentState
+from langgraph.types import Command
 
 load_dotenv()
 # 开发调试开关：True=MockMCP；False=真实SSE MCP
@@ -47,10 +48,9 @@ class ComplianceAgentService:
         return await self.graph.ainvoke(init_state, config=config)
 
     async def resume_review(self, thread_id: str, human_approval: bool):
-        """中断后恢复工作流，传入人工审批结果"""
         config = {"configurable": {"thread_id": thread_id}}
         return await self.graph.ainvoke(
-            input={"human_approval": human_approval},
+            input=Command(resume=human_approval),
             config=config
         )
 
