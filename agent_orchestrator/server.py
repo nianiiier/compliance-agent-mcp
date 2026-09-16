@@ -17,19 +17,15 @@ from langgraph.types import Command
 load_dotenv()
 
 # ============ MCP传输模式配置 ============
-MCP_TRANSPORT = "mock"      # 调试，不启动子进程
-# MCP_TRANSPORT = "stdio"        # ✅ 本机优先使用stdio，完全不用SSE
-# MCP_TRANSPORT = "sse"       # 备用，SSE模式
+MCP_TRANSPORT = os.getenv("MCP_TRANSPORT", "stdio")
+MCP_SSE_HOST = os.getenv("MCP_HOST", "127.0.0.1")
+MCP_SSE_PORT = int(os.getenv("MCP_PORT", "8005"))
 
 # stdio配置：mcp‑server脚本路径
 from pathlib import Path
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 MCP_SERVER_SCRIPT = str(PROJECT_ROOT / "mcp_server" / "main.py")
-# sse备用配置，只有transport=sse才生效
-MCP_SSE_HOST = "127.0.0.1"
-MCP_SSE_PORT = 8005
-
 
 class ComplianceAgentService:
     def __init__(self):
@@ -73,9 +69,11 @@ class ComplianceAgentService:
             config=config
         )
 
-
-
-
     async def get_thread_state(self, thread_id: str):
         config = {"configurable": {"thread_id": thread_id}}
         return await self.graph.aget_state(config=config)
+
+    async def call_mcp_tool(self, tool_name: str, arguments: dict):
+        if self._mcp_client is None:
+            raise RuntimeError("MCP客户端未初始化")
+        return await self._mcp_client.call_tool(tool_name, arguments)

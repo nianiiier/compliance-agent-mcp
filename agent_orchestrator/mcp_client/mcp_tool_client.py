@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import sys
+import anyio
 from typing import Dict, Any, Optional, List
 from dotenv import load_dotenv
 from mcp import ClientSession, Tool
@@ -16,10 +17,6 @@ from contextlib import asynccontextmanager
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp import StdioServerParameters
-
-# Windows事件循环补丁
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
 logger = logging.getLogger("mcp_client")
@@ -47,17 +44,34 @@ class MCPToolClient:
     async def connect(self):
         """初始化session握手，外部传入read/write流"""
         self._session = ClientSession(self.read_stream, self.write_stream)
-        logger.info("等待initialize握手...")
-        await asyncio.wait_for(self._session.initialize(), timeout=20.0)
-        logger.info("MCP initialize握手完成")
-        resp = await self._session.list_tools()
-        self._tools_cache = resp.tools
-        logger.info(f"MCP连接成功，工具列表: {[t.name for t in self._tools_cache]}")
+        await self._session.__aenter__()
+
+        try:
+            logger.info("等待initialize握手...")
+            with anyio.fail_after(30):
+                await self._session.initialize()
+            logger.info("MCP initialize握手完成")
+
+            resp = await self._session.list_tools()
+            self._tools_cache = resp.tools
+            logger.info(f"MCP连接成功，工具列表: {[t.name for t in self._tools_cache]}")
+        except BaseException:
+            # 初始化失败，清理 session 再抛出
+            try:
+                await self._session.__aexit__(None, None, None)
+            except Exception:
+                pass
+            self._session = None
+            raise
 
     async def close(self):
-        if self._session:
-            await self._session.close()
-            self._session = None
+        if self._session is not None:
+            try:
+                await self._session.__aexit__(None, None, None)
+            except Exception as e:
+                logger.warning(f"关闭MCP session时异常: {e}")
+            finally:
+                self._session = None
         self._tools_cache.clear()
         logger.info("MCP会话已关闭")
 
@@ -74,10 +88,8 @@ class MCPToolClient:
         for attempt in range(self.retry_times + 1):
             try:
                 logger.info(f"调用工具 {tool_name}, args摘要 {str(arguments)[:200]}")
-                resp = await asyncio.wait_for(
-                    self._session.call_tool(tool_name, arguments),
-                    timeout=self.timeout
-                )
+                with anyio.fail_after(self.timeout):
+                    resp = await self._session.call_tool(tool_name, arguments)
                 payload = json.loads(resp.content[0].text)
                 logger.info(f"工具 {tool_name} 调用成功")
                 return payload

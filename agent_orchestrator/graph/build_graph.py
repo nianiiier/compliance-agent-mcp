@@ -36,6 +36,7 @@ def build_agent_graph(mcp_client):
         check_after_hitl,
         {
             "to_report": "report_node",
+            "rejected": END,      # 驳回 → 结束
             "end_flow": END
         }
     )

@@ -18,13 +18,14 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+*.pyc
 
 # 环境、密钥
 .env
 *.env
 .venv/
 requirements.txt
-
+models/
 
 # 向量库、本地数据
 vector_db/
@@ -32,6 +33,7 @@ data/upload_docs/*
 !data/upload_docs/.gitkeep
 data/violation_case/*
 !data/violation_case/.gitkeep
+data/upload_docs/*.pdf
 
 # 日志、trace
 traces/

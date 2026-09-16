@@ -1,31 +1,20 @@
 import sys
-import os
 from pathlib import Path
-
-# Windows stdio管道兼容补丁
-if sys.platform == "win32":
-    import asyncio
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(PROJECT_ROOT))
 
 import asyncio
 import logging
-from mcp.client.stdio import stdio_client, StdioServerParameters
+from mcp.client.sse import sse_client
 from agent_orchestrator.mcp_client.mcp_tool_client import MCPToolClient
 from agent_orchestrator.graph.state import ComplianceAgentState
 
 logging.basicConfig(level=logging.INFO)
 
 async def main():
-    # 【关键】stdio_client放在脚本最外层，复用阶段1已经验证稳定的写法
-    server_params = StdioServerParameters(
-        command="uv",
-        args=["run", "python", "mcp_server/main.py", "--transport", "stdio"],
-        env=os.environ.copy()
-    )
-    async with stdio_client(server_params) as (read, write):
+    # ✅ 前置：另一个终端已启动 MCP SSE server
+    url = "http://127.0.0.1:8005/sse"
+    async with sse_client(url) as (read, write):
         client = MCPToolClient(read_stream=read, write_stream=write)
         await client.connect()
         try:

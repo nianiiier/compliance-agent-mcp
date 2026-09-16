@@ -1,8 +1,15 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 import os
 
+# ✅ 强制使用国内镜像，必须放在任何 huggingface/transformers import 之前
+os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+
 load_dotenv()
+
+_PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+_LOCAL_MODEL = _PROJECT_ROOT / "models" / "all-MiniLM-L6-v2"
 
 class Settings(BaseSettings):
     # 向量库路径
@@ -16,7 +23,7 @@ class Settings(BaseSettings):
     COLLECTION_VIOLATION_CASES: str = "violation_cases"
 
     # Embedding & 切分
-    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = str(_LOCAL_MODEL) if _LOCAL_MODEL.exists() else "sentence-transformers/all-MiniLM-L6-v2"
     CHUNK_SIZE: int = 800
     CHUNK_OVERLAP: int = 150
 
