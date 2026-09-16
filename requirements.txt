@@ -27,3 +27,6 @@ jupyter
 ruff
 
 rank-bm25>=0.2.2,<0.3
+
+langchain-ollama>=0.2.0
+datasets>=2.18.0
