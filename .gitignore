@@ -34,6 +34,7 @@ data/upload_docs/*
 data/violation_case/*
 !data/violation_case/.gitkeep
 data/upload_docs/*.pdf
+ragas_evaluation/*.csv
 
 # 日志、trace
 traces/

@@ -1,3 +1,4 @@
+import re
 import hashlib
 from pathlib import Path
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -5,6 +6,7 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from mcp_server.config import settings
+from langchain_core.documents import Document
 
 def get_embedding_func():
     return HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
@@ -15,6 +17,13 @@ def get_compliance_vector_store():
         embedding_function=get_embedding_func(),
         collection_name=settings.COLLECTION_COMPLIANCE_RULES
     )
+
+def split_by_article(text: str) -> list[str]:
+    """按'第X条'切分法规，每条法条独立"""
+    # 匹配 "第一条"、"第四十三条"、"第一百二十条" 等
+    pattern = r'(?=第[一二三四五六七八九十百千零\d]+条\s)'
+    parts = re.split(pattern, text)
+    return [p.strip() for p in parts if p.strip()]
 
 def parse_and_ingest_document(file_path: str) -> dict:
     """
@@ -38,11 +47,14 @@ def parse_and_ingest_document(file_path: str) -> dict:
         raw_docs = loader.load()
 
         # 切分
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=settings.CHUNK_SIZE,
-            chunk_overlap=settings.CHUNK_OVERLAP
-        )
-        split_docs = splitter.split_documents(raw_docs)
+        split_docs = []
+        for raw in raw_docs:
+            for part in split_by_article(raw.page_content):
+                if len(part) >= 30:   # 过滤章节标题等太短的
+                    split_docs.append(Document(
+                        page_content=part,
+                        metadata=raw.metadata,
+                    ))
 
         # chunk去重：按文本hash过滤完全重复切片
         seen_hash = set()

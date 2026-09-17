@@ -9,7 +9,16 @@ os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
 load_dotenv()
 
 _PROJECT_ROOT = Path(__file__).parent.parent.resolve()
-_LOCAL_MODEL = _PROJECT_ROOT / "models" / "all-MiniLM-L6-v2"
+_ZH_MODEL = _PROJECT_ROOT / "models" / "bge-small-zh-v1.5"
+_OLD_MODEL = _PROJECT_ROOT / "models" / "all-MiniLM-L6-v2"
+
+# ✅ 优先中文模型，其次英文旧模型
+if _ZH_MODEL.exists():
+    _MODEL_PATH = str(_ZH_MODEL)
+elif _OLD_MODEL.exists():
+    _MODEL_PATH = str(_OLD_MODEL)
+else:
+    _MODEL_PATH = "BAAI/bge-small-zh-v1.5"
 
 class Settings(BaseSettings):
     # 向量库路径
@@ -23,9 +32,9 @@ class Settings(BaseSettings):
     COLLECTION_VIOLATION_CASES: str = "violation_cases"
 
     # Embedding & 切分
-    EMBEDDING_MODEL: str = str(_LOCAL_MODEL) if _LOCAL_MODEL.exists() else "sentence-transformers/all-MiniLM-L6-v2"
-    CHUNK_SIZE: int = 800
-    CHUNK_OVERLAP: int = 150
+    EMBEDDING_MODEL: str = _MODEL_PATH
+    CHUNK_SIZE: int = 500
+    CHUNK_OVERLAP: int = 100
 
     # 检索配置
     RETRIEVE_TOP_K: int = 4

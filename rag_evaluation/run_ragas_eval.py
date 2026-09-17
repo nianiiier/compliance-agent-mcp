@@ -58,7 +58,8 @@ def build_ragas_llm():
         api_key="ollama",                       # Ollama 不校验，随便填
     )
     return llm_factory(
-        model=os.getenv("LLM_MODEL_NAME", "qwen2.5:3b"),
+        model="qwen2.5:7b", 
+        # model=os.getenv("LLM_MODEL_NAME", "qwen2.5:3b"),
         client=client,
         # 上下文窗口给大一些，RAGAS 评判 prompt 很长
         # 参数名可能随版本不同，报错时看提示
@@ -196,7 +197,7 @@ async def main():
         metrics=metrics,
         llm=ragas_llm,
         embeddings=ragas_emb,
-        run_config=RunConfig(max_workers=2, timeout=180),
+        run_config=RunConfig(max_workers=4, timeout=180),
     )
 
     print("\n=== 评估结果 ===")
