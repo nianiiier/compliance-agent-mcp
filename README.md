@@ -24,7 +24,7 @@
 
 ---
 
-## 🎯 项目亮点（简历速览）
+## 🎯 项目亮点
 
 - **多 Agent 编排**：LangGraph 4 节点流水线，原生 `interrupt()` 实现 HITL 中断恢复
 - **协议解耦**：MCP 协议分离工具层与编排层，工具服务独立进程部署
@@ -237,10 +237,6 @@ uv run python scripts/test_langgraph_sse_e2e.py
 
 输出包含：中断 payload、检索条款、风险等级、最终报告。
 
-### 方式 3：录屏演示
-
-跑方式 1 或 2，录一段 60 秒视频，放到简历里。
-
 ---
 
 ## 🧪 测试脚本速查
@@ -274,7 +270,7 @@ uv run python scripts/test_langgraph_sse_e2e.py
 
 **修复方案（三选一）**：
 
-**方案 A（推荐，最简单）**：每次上传前清空集合
+**方案 A（最简单）**：每次上传前清空集合
 ```python
 # doc_parser_tool.py 里
 vector_store.delete_collection()
@@ -282,7 +278,7 @@ vector_store = get_compliance_vector_store()  # 重建
 ```
 **缺点**：多文档场景下会覆盖已有文档。
 
-**方案 B（生产推荐）**：按 `source` metadata 去重
+**方案 B（生产环境）**：按 `source` metadata 去重
 ```python
 # 删除同 source 旧 chunk，再入库新 chunk
 existing = vector_store.get(where={"source": str(fp)})
@@ -294,8 +290,6 @@ vector_store.add_documents(dedup_docs)
 
 **方案 C**：全局 hash 去重（跳过已存在 chunk）
 **缺点**：文档更新后旧版 chunk 残留。
-
-**当前演示场景**：建议手动删 `vector_db/` 后重传。
 
 ---
 
@@ -445,21 +439,3 @@ def _extract_json(text: str) -> str:
 - [ ] 前端 Vue3 最小原型
 - [ ] Docker Compose 部署
 - [ ] LangFuse 链路追踪
-```
-
----
-
-## 三个动作
-
-1. **覆盖 `README.md`**（上面整段）
-2. **创建 `.env.example`**（脱敏模板，入 git）
-3. **创建 `.gitignore`**（如果还没有）：
-   ```
-   .env
-   .venv/
-   models/
-   vector_db/
-   __pycache__/
-   *.pyc
-   ragas_evaluation/*.csv
-   ```
